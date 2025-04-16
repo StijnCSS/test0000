@@ -7,17 +7,23 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<p>y</p>
-    <h1>Draw a letter with your finger or mouse</h1>
+    <h1>Erik's Drawpad</h1>
 <canvas id="canvas" width="280" height="280"></canvas><br>
 <button id="clear">Clear</button>
+
 <button id="predict" disabled>Recognize</button>
+
 <p id="output">Waiting for input...</p>
+
+<textarea id="typedText" rows="4" cols="40" placeholder="Your letter will appear here..." style="margin-top: 1rem;"></textarea>
+
+
+
 
 <!-- TensorFlow + Teachable Machine -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
+
 <script src="script.js"></script>
 </body>
 </html>
-

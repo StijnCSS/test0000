@@ -1,13 +1,15 @@
 window.addEventListener('load', () => {
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#000";
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 6;
   ctx.lineCap = "round";
 
   const clearBtn = document.getElementById('clear');
   const predictBtn = document.getElementById('predict');
-  const output = document.getElementById('output');
+  const typedText = document.getElementById('typedText');
 
   let drawing = false;
   let modelReady = false;
@@ -47,8 +49,9 @@ window.addEventListener('load', () => {
   }
 
   clearBtn.addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    output.textContent = 'Canvas cleared!';
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   });
 
   // Load Teachable Machine model
@@ -85,10 +88,10 @@ const waitForTM = setInterval(() => {
             return;
           }
           const prediction = await model.predict(image);
-      prediction.sort((a, b) => b.probability - a.probability);
+          console.log("FULL prediction array:", prediction);
+          prediction.sort((a, b) => b.probability - a.probability);
       output.textContent = `You drew: ${prediction[0].className} (${(prediction[0].probability * 100).toFixed(1)}%)`;
+      typedText.value += prediction[0].className;
     };
   });
 });
-
-

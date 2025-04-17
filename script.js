@@ -1,4 +1,6 @@
 window.addEventListener('load', () => {
+  let lastInputTime = Date.now();
+  let isCheckingIdle = false;
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = "#fff";
@@ -8,11 +10,12 @@ window.addEventListener('load', () => {
   ctx.lineCap = "round";
 
   const clearBtn = document.getElementById('clear');
-  const predictBtn = document.getElementById('predict');
   const typedText = document.getElementById('typedText');
 
   let drawing = false;
   let modelReady = false;
+  let predictionTimeout;
+
 
   canvas.addEventListener('mousedown', startDraw);
   canvas.addEventListener('mouseup', endDraw);
@@ -37,15 +40,37 @@ window.addEventListener('load', () => {
   }
 
   function draw(e) {
-    if (!drawing) return;
+  if (!drawing) return;
+  lastInputTime = Date.now();
     const [x, y] = getPos(e);
     ctx.lineTo(x, y);
     ctx.stroke();
   }
+  
+  async function predictFromCanvas() {
+    if (!modelReady || !model) return;
+
+    const image = new Image();
+    image.src = canvas.toDataURL();
+    image.onload = async () => {
+      const prediction = await model.predict(image);
+      console.log("FULL prediction array:", prediction);
+      prediction.sort((a, b) => b.probability - a.probability);
+      typedText.value += prediction[0].className;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+  }
+
 
   function endDraw() {
     drawing = false;
     ctx.closePath();
+    if (predictionTimeout) clearTimeout(predictionTimeout);
+    if (!isCheckingIdle) {
+      isCheckingIdle = true;
+      checkIdle();
+    }
   }
 
   clearBtn.addEventListener('click', () => {
@@ -66,7 +91,7 @@ window.addEventListener('load', () => {
   
     model = await tmImage.load(URL + "model.json", URL + "metadata.json");
     modelReady = true;
-    predictBtn.disabled = false;
+    
     console.log("Model loaded");
   }
 
@@ -78,20 +103,13 @@ const waitForTM = setInterval(() => {
     }
   }, 100); // check every 100ms
 
-  // Predict from canvas
-  predictBtn.addEventListener('click', async () => {
-    const image = new Image();
-    image.src = canvas.toDataURL();
-    image.onload = async () => {
-        if (!modelReady || !model) {
-            output.textContent = "Model not ready yet. Please wait a moment.";
-            return;
-          }
-          const prediction = await model.predict(image);
-          console.log("FULL prediction array:", prediction);
-          prediction.sort((a, b) => b.probability - a.probability);
-      output.textContent = `You drew: ${prediction[0].className} (${(prediction[0].probability * 100).toFixed(1)}%)`;
-      typedText.value += prediction[0].className;
-    };
-  });
+  function checkIdle() {
+    const now = Date.now();
+    if (now - lastInputTime >= 500) {
+      isCheckingIdle = false;
+      predictFromCanvas();
+    } else {
+      requestAnimationFrame(checkIdle);
+    }
+  }
 });
